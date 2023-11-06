@@ -26,6 +26,7 @@ import java.util.HashMap;
 
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.OsmMercator;
+import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
 
 import freemind.main.XMLElement;
@@ -175,12 +176,14 @@ public class MapNodePositionHolder extends MapNodePositionHolderBase {
 
 	/**
 	 * Set map position. Is undoable.
-	 * 
+	 *
+	 * @param pPosition
+	 * @param pMapCenter
 	 * @param pTileSource
-	 * 
+	 *
 	 */
-	public void changePosition(Coordinate pPosition, Coordinate pMapCenter,
-			int pZoom, String pTileSource) {
+	public void changePosition(ICoordinate pPosition, ICoordinate pMapCenter,
+							   int pZoom, String pTileSource) {
 		getRegistration().changePosition(this, pPosition, pMapCenter, pZoom,
 				pTileSource);
 	}
@@ -316,8 +319,8 @@ public class MapNodePositionHolder extends MapNodePositionHolderBase {
 		}
 		TileSource tileSource = FreeMindMapController.getTileSourceByName(mTileSource).mTileSource;
 		int tileSize = tileSource.getTileSize();
-		int exactx = (int) OsmMercator.LonToX(mPosition.getLon(), mZoom);
-		int exacty = (int) OsmMercator.LatToY(mPosition.getLat(), mZoom);
+		int exactx = (int) OsmMercator.MERCATOR_256.lonToX(mPosition.getLon(), mZoom);
+		int exacty = (int) OsmMercator.MERCATOR_256.latToY(mPosition.getLat(), mZoom);
 		int x = exactx / tileSize;
 		int y = exacty / tileSize;
 		// determine other surrounding tiles that are close to the exact

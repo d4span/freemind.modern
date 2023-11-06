@@ -101,9 +101,6 @@ public class BrowseController extends ViewControllerAdapter {
 					tileSources.put(
 							MapNodePositionHolderBase.TILE_SOURCE_MAPNIK,
 							MapNodePositionHolderBase.SHORT_MAPNIK);
-					tileSources.put(
-							MapNodePositionHolderBase.TILE_SOURCE_CYCLE_MAP,
-							MapNodePositionHolderBase.SHORT_CYCLE_MAP);
 					tileSources
 							.put(MapNodePositionHolderBase.TILE_SOURCE_TRANSPORT_MAP,
 									MapNodePositionHolderBase.SHORT_TRANSPORT_MAP);

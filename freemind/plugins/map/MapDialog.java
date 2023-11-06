@@ -44,6 +44,7 @@ import org.openstreetmap.gui.jmapviewer.JMapViewer;
 import org.openstreetmap.gui.jmapviewer.OsmMercator;
 import org.openstreetmap.gui.jmapviewer.OsmTileLoader;
 import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
+import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.JMapViewerEventListener;
 import org.openstreetmap.gui.jmapviewer.tilesources.OsmTileSource.Mapnik;
 
@@ -179,15 +180,15 @@ public class MapDialog extends MindMapHookAdapter implements
 		private final String[] COLUMNS = new String[] {
 				SEARCH_DESCRIPTION_COLUMN_TEXT, SEARCH_DISTANCE_COLUMN_TEXT };
 		Vector<Place> mData = new Vector<>();
-		private Coordinate mCursorCoordinate = new Coordinate(0, 0);
+		private ICoordinate mCursorCoordinate = new Coordinate(0, 0);
 		private HashMap<Place, MapSearchMarkerLocation> mMapSearchMarkerLocationHash = new HashMap<>();
 		private final TextTranslator mTextTranslator;
 
 		/**
 		 * @param pCursorCoordinate
 		 */
-		public ResultTableModel(Coordinate pCursorCoordinate,
-				TextTranslator pTextTranslator) {
+		public ResultTableModel(ICoordinate pCursorCoordinate,
+								TextTranslator pTextTranslator) {
 			super();
 			mCursorCoordinate = pCursorCoordinate;
 			mTextTranslator = pTextTranslator;
@@ -272,7 +273,7 @@ public class MapDialog extends MindMapHookAdapter implements
 			final Place place = getPlace(pRowIndex);
 			switch (pColumnIndex) {
 			case SEARCH_DISTANCE_COLUMN:
-				final double value = OsmMercator.getDistance(
+				final double value = OsmMercator.MERCATOR_256.getDistance(
 						mCursorCoordinate.getLat(), mCursorCoordinate.getLon(),
 						place.getLat(), place.getLon()) / 1000.0;
 				if (Double.isInfinite(value) || Double.isNaN(value)) {
@@ -306,7 +307,7 @@ public class MapDialog extends MindMapHookAdapter implements
 		 * @see plugins.map.FreeMindMapController.CursorPositionListener#
 		 * cursorPositionChanged(org.openstreetmap.gui.jmapviewer.Coordinate)
 		 */
-		public void cursorPositionChanged(Coordinate pCursorPosition) {
+		public void cursorPositionChanged(ICoordinate pCursorPosition) {
 			mCursorCoordinate = pCursorPosition;
 			fireTableDataChanged();
 		}
@@ -697,16 +698,16 @@ public class MapDialog extends MindMapHookAdapter implements
 		MapWindowConfigurationStorage storage = new MapWindowConfigurationStorage();
 		// Set coordinates
 		storage.setZoom(map.getZoom());
-		Coordinate position = map.getPosition();
+		ICoordinate position = map.getPosition();
 		storage.setMapCenterLongitude(position.getLon());
 		storage.setMapCenterLatitude(position.getLat());
-		Coordinate cursorPosition = map.getCursorPosition();
+		ICoordinate cursorPosition = map.getCursorPosition();
 		storage.setCursorLongitude(cursorPosition.getLon());
 		storage.setCursorLatitude(cursorPosition.getLat());
 		storage.setTileSource(map.getTileController().getTileSource()
 				.getClass().getName());
 		storage.setTileGridVisible(map.isTileGridVisible());
-		storage.setZoomControlsVisible(map.getZoomContolsVisible());
+		storage.setZoomControlsVisible(map.getZoomControlsVisible());
 		storage.setShowMapMarker(map.getMapMarkersVisible());
 		storage.setSearchControlVisible(mSearchBarVisible);
 		storage.setLimitSearchToVisibleArea(mLimitSearchToRegion);
@@ -746,7 +747,6 @@ public class MapDialog extends MindMapHookAdapter implements
 
 	/**
 	 * @param pString
-	 * @param pMeterPerPixel
 	 * @return
 	 */
 	private String format(String pString, double pObject) {

@@ -35,9 +35,9 @@ import javax.swing.JMenuItem;
 
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.MemoryTileCache;
-import org.openstreetmap.gui.jmapviewer.OsmFileCacheTileLoader;
 import org.openstreetmap.gui.jmapviewer.OsmTileLoader;
 import org.openstreetmap.gui.jmapviewer.Tile;
+import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.TileCache;
 import org.openstreetmap.gui.jmapviewer.interfaces.TileLoaderListener;
 
@@ -286,13 +286,11 @@ public class Registration implements HookRegistration, ActorXml,
 		if (Tools.safeEquals(tileCacheClass, "file")) {
 			File cacheDir = getCacheDirectory();
 			try {
-				OsmFileCacheTileLoader osmFileCacheTileLoader = new OsmFileCacheTileLoader(
-						mMap, cacheDir);
+				OsmTileLoader osmFileCacheTileLoader = new OsmTileLoader(
+						mMap);
+
 				loader = osmFileCacheTileLoader;
 				long maxFileAge = getCacheMaxAge();
-				logger.info("Setting cache max age to " + maxFileAge
-						/ OsmFileCacheTileLoader.FILE_AGE_ONE_DAY + " days.");
-				osmFileCacheTileLoader.setCacheMaxFileAge(maxFileAge);
 			} catch (Exception e1) {
 				freemind.main.Resources.getInstance().logException(e1);
 			}
@@ -310,7 +308,7 @@ public class Registration implements HookRegistration, ActorXml,
 	protected long getCacheMaxAge() {
 		long maxFileAge = Resources.getInstance().getLongProperty(
 				MapDialog.TILE_CACHE_MAX_AGE,
-				OsmFileCacheTileLoader.FILE_AGE_ONE_WEEK);
+				0);
 		return maxFileAge;
 	}
 
@@ -334,8 +332,8 @@ public class Registration implements HookRegistration, ActorXml,
 	 * 
 	 */
 	public void changePosition(MapNodePositionHolder pHolder,
-			Coordinate pPosition, Coordinate pMapCenter, int pZoom,
-			String pTileSource) {
+							   ICoordinate pPosition, ICoordinate pMapCenter, int pZoom,
+							   String pTileSource) {
 		MindMapNode node = pHolder.getNode();
 		PlaceNodeXmlAction doAction = createPlaceNodeXmlActionAction(node,
 				pPosition, pMapCenter, pZoom, pTileSource);
@@ -356,7 +354,7 @@ public class Registration implements HookRegistration, ActorXml,
 	 * @return
 	 */
 	private PlaceNodeXmlAction createPlaceNodeXmlActionAction(
-			MindMapNode pNode, Coordinate pPosition, Coordinate pMapCenter,
+			MindMapNode pNode, ICoordinate pPosition, ICoordinate pMapCenter,
 			int pZoom, String pTileSource) {
 		logger.info("Setting position of node " + pNode);
 		PlaceNodeXmlAction action = new PlaceNodeXmlAction();

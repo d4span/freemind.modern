@@ -52,7 +52,6 @@ public class MapNodePositionHolderBase extends PermanentNodeHookAdapter {
 	protected static final String NODE_MAP_SHOW_TOOLTIP = "node_map_show_tooltip";
 	public static final String TILE_SOURCE_MAP_QUEST_OPEN_MAP = "plugins.map.FreeMindMapController.MapQuestOpenMap";
 	public static final String TILE_SOURCE_TRANSPORT_MAP = "plugins.map.FreeMindMapController.TransportMap";
-	public static final String TILE_SOURCE_CYCLE_MAP = "org.openstreetmap.gui.jmapviewer.tilesources.OsmTileSource$CycleMap";
 	public static final String TILE_SOURCE_MAPNIK = "org.openstreetmap.gui.jmapviewer.tilesources.OsmTileSource$Mapnik";
 	public static final String SHORT_MAP_QUEST_OPEN_MAP = "Q";
 	public static final String SHORT_TRANSPORT_MAP = "T";

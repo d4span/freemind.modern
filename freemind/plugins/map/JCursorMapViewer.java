@@ -40,6 +40,7 @@ import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.JMapViewer;
 import org.openstreetmap.gui.jmapviewer.Tile;
 import org.openstreetmap.gui.jmapviewer.TileController;
+import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.TileCache;
 import org.openstreetmap.gui.jmapviewer.interfaces.TileLoaderListener;
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
@@ -118,14 +119,14 @@ final class JCursorMapViewer extends JMapViewer {
 
 	boolean mShowCursor;
 	boolean mUseCursor;
-	Coordinate mCursorPosition;
+	ICoordinate mCursorPosition;
 	Stroke mStroke;
 	Stroke mRectangularStroke = new BasicStroke(1, BasicStroke.CAP_SQUARE,
 			BasicStroke.JOIN_MITER, 10.0f, new float[] { 10.0f, 10.0f }, 0.0f);
 	private FreeMindMapController mFreeMindMapController;
 	private boolean mHideFoldedNodes = true;
-	private Coordinate mRectangularStart;
-	private Coordinate mRectangularEnd;
+	private ICoordinate mRectangularStart;
+	private ICoordinate mRectangularEnd;
 	private boolean mDrawRectangular = false;
 	private int mCursorLength;
 
@@ -168,11 +169,11 @@ final class JCursorMapViewer extends JMapViewer {
 
 	}
 
-	public Coordinate getCursorPosition() {
+	public ICoordinate getCursorPosition() {
 		return mCursorPosition;
 	}
 
-	public void setCursorPosition(Coordinate pCursorPosition) {
+	public void setCursorPosition(ICoordinate pCursorPosition) {
 		mCursorPosition = pCursorPosition;
 		repaint();
 	}
@@ -192,7 +193,7 @@ final class JCursorMapViewer extends JMapViewer {
 			Color oldColor = g2d.getColor();
 			// do cursor
 			if (mUseCursor && mShowCursor) {
-				Point position = getMapPosition(mCursorPosition);
+				Point position = getMapPosition(this.mCursorPosition);
 				if (position != null) {
 					int size_h = mCursorLength;
 					g2d.setStroke(mStroke);
@@ -217,8 +218,15 @@ final class JCursorMapViewer extends JMapViewer {
 		}
 	}
 
-	public Rectangle getRectangle(Coordinate rectangularStart,
-			Coordinate rectangularEnd) {
+	private Point getMapPosition(ICoordinate coordinate) {
+		if(! (coordinate instanceof Coordinate)){
+			throw new IllegalArgumentException("Not a coordinate: " + coordinate);
+		}
+		return getMapPosition((Coordinate) coordinate);
+	}
+
+	public Rectangle getRectangle(ICoordinate rectangularStart,
+								  ICoordinate rectangularEnd) {
 		Point positionStart = getMapPosition(rectangularStart);
 		Point positionEnd = getMapPosition(rectangularEnd);
 		Rectangle r = null;
@@ -259,7 +267,7 @@ final class JCursorMapViewer extends JMapViewer {
 		return mHideFoldedNodes;
 	}
 
-	public void setRectangular(Coordinate pRectangularStart, Coordinate pRectangularEnd) {
+	public void setRectangular(ICoordinate pRectangularStart, ICoordinate pRectangularEnd) {
 		mRectangularStart = pRectangularStart;
 		mRectangularEnd = pRectangularEnd;
 	}

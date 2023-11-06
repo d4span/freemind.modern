@@ -78,6 +78,7 @@ import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.JMapController;
 import org.openstreetmap.gui.jmapviewer.JMapViewer;
 import org.openstreetmap.gui.jmapviewer.OsmMercator;
+import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.AbstractOsmTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.OsmTileSource;
@@ -132,7 +133,7 @@ public class FreeMindMapController extends JMapController implements
 	 * @date 27.07.2012
 	 */
 	public interface CursorPositionListener {
-		void cursorPositionChanged(Coordinate pCursorPosition);
+		void cursorPositionChanged(ICoordinate pCursorPosition);
 	}
 
 	/**
@@ -209,7 +210,7 @@ public class FreeMindMapController extends JMapController implements
 
 	private boolean mIsRectangularSelect;
 
-	private Coordinate mRectangularStart;
+	private ICoordinate mRectangularStart;
 
 	private Vector<FreeMindMapController.PositionHolder> mPositionHolderVector = new Vector<>();
 	/**
@@ -239,7 +240,7 @@ public class FreeMindMapController extends JMapController implements
 		private int SERVER_NUM = 0;
 
 		public TransportMap() {
-			super("OSM Transport Map", PATTERN);
+			super("OSM Transport Map", PATTERN, null);
 		}
 
 		public String getBaseUrl() {
@@ -251,10 +252,6 @@ public class FreeMindMapController extends JMapController implements
 
 		public int getMaxZoom() {
 			return 18;
-		}
-
-		public TileUpdate getTileUpdate() {
-			return TileUpdate.LastModified;
 		}
 	}
 
@@ -268,7 +265,7 @@ public class FreeMindMapController extends JMapController implements
 		private int SERVER_NUM = 0;
 
 		public MapQuestOpenMap() {
-			super("OSM MapQuest.Open Map", PATTERN);
+			super("OSM MapQuest.Open Map", PATTERN, null);
 		}
 
 		public String getBaseUrl() {
@@ -282,14 +279,18 @@ public class FreeMindMapController extends JMapController implements
 			return 18;
 		}
 
-		public TileUpdate getTileUpdate() {
-			return TileUpdate.LastModified;
-		}
 	}
 	
 	private static class HttpMapnik extends Mapnik {
 		public HttpMapnik() {
 			this.baseUrl=this.baseUrl.replaceFirst("^https", "http");
+		}
+		@Override
+		public int getTileSize() {
+			if (tileSize <= 0) {
+				return 2*getDefaultTileSize();
+			}
+			return 2*tileSize;
 		}
 	}
 
@@ -298,8 +299,6 @@ public class FreeMindMapController extends JMapController implements
 					MapNodePositionHolderBase.SHORT_MAPNIK),
 			new TileSourceStore(new HttpMapnik(),
 					MapNodePositionHolderBase.SHORT_MAPNIK),
-			new TileSourceStore(new OsmTileSource.CycleMap(),
-					MapNodePositionHolderBase.SHORT_CYCLE_MAP),
 			new TileSourceStore(new TransportMap(),
 					MapNodePositionHolderBase.SHORT_TRANSPORT_MAP),
 			new TileSourceStore(new MapQuestOpenMap(),
@@ -471,7 +470,7 @@ public class FreeMindMapController extends JMapController implements
 		 */
 		protected boolean searchForNearestNode(boolean alternative) {
 			boolean returnValue = false;
-			Coordinate cursorPosition = getMap().getCursorPosition();
+			ICoordinate cursorPosition = getMap().getCursorPosition();
 			// get map marker locations:
 			HashSet<MapNodePositionHolder> mapNodePositionHolders = new HashSet<>(mMapHook.getMapNodePositionHolders());
 			logger.fine("Before removal " + mapNodePositionHolders.size()
@@ -512,16 +511,16 @@ public class FreeMindMapController extends JMapController implements
 			return returnValue;
 		}
 
-		public boolean destinationQuadrantCheck(Coordinate cursorPosition,
-				Coordinate pointPosition, boolean alternative) {
+		public boolean destinationQuadrantCheck(ICoordinate cursorPosition,
+				ICoordinate pointPosition, boolean alternative) {
 			int mapZoomMax = getMaxZoom();
-			int x1 = (int) OsmMercator.LonToX(cursorPosition.getLon(),
+			int x1 = (int) OsmMercator.MERCATOR_256.lonToX(cursorPosition.getLon(),
 					mapZoomMax);
-			int y1 = (int) OsmMercator.LatToY(cursorPosition.getLat(),
+			int y1 = (int) OsmMercator.MERCATOR_256.latToY(cursorPosition.getLat(),
 					mapZoomMax);
-			int x2 = (int) OsmMercator.LonToX(pointPosition.getLon(),
+			int x2 = (int) OsmMercator.MERCATOR_256.lonToX(pointPosition.getLon(),
 					mapZoomMax);
-			int y2 = (int) OsmMercator.LatToY(pointPosition.getLat(),
+			int y2 = (int) OsmMercator.MERCATOR_256.latToY(pointPosition.getLat(),
 					mapZoomMax);
 			return destinationQuadrantCheck(x1, y1, x2, y2, alternative);
 		}
@@ -533,23 +532,13 @@ public class FreeMindMapController extends JMapController implements
 		public abstract boolean destinationQuadrantCheck(int x1, int y1,
 				int x2, int y2, boolean alternative);
 
-		/**
-		 * @param pPointPosition
-		 * @param pCursorPosition
-		 * @return
-		 */
-		private boolean safeEquals(Coordinate p1, Coordinate p2) {
+		private boolean safeEquals(ICoordinate p1, ICoordinate p2) {
 			return (p1 != null && p2 != null && p1.getLon() == p2.getLon() && p1
 					.getLat() == p2.getLat()) || (p1 == null && p2 == null);
 		}
 
-		/**
-		 * @param pPosition
-		 * @param pCursorPosition
-		 * @return
-		 */
-		private double dist(Coordinate p1, Coordinate p2) {
-			return OsmMercator.getDistance(p1.getLat(), p1.getLon(),
+		private double dist(ICoordinate p1, ICoordinate p2) {
+			return OsmMercator.MERCATOR_256.getDistance(p1.getLat(), p1.getLon(),
 					p2.getLat(), p2.getLon());
 		}
 	}
@@ -785,7 +774,7 @@ public class FreeMindMapController extends JMapController implements
 		}
 
 		public void actionPerformed(ActionEvent pE) {
-			Coordinate cursorPosition = getMap().getCursorPosition();
+			ICoordinate cursorPosition = getMap().getCursorPosition();
 			String propertyValue = cursorPosition.getLat() + ":"
 					+ cursorPosition.getLon() + ":" + map.getZoom();
 			mMindMapController.getController().setProperty(
@@ -848,11 +837,11 @@ public class FreeMindMapController extends JMapController implements
 		}
 
 		public void actionPerformed(ActionEvent pE) {
-			map.setZoomContolsVisible(!map.getZoomContolsVisible());
+			map.setZoomContolsVisible(!map.getZoomControlsVisible());
 		}
 
 		public boolean isSelected(JMenuItem pCheckItem, Action pAction) {
-			return map.getZoomContolsVisible();
+			return map.getZoomControlsVisible();
 		}
 
 	}
@@ -990,7 +979,7 @@ public class FreeMindMapController extends JMapController implements
 		}
 
 		public void actionPerformed(ActionEvent pE) {
-			Coordinate cursorPosition = getMap().getCursorPosition();
+			ICoordinate cursorPosition = getMap().getCursorPosition();
 			int zoom = getMaxZoom() - CURSOR_MAXIMAL_ZOOM_HANDBREAK;
 			if (getMap().getZoom() >= zoom) {
 				zoom += CURSOR_MAXIMAL_ZOOM_HANDBREAK;
@@ -1011,7 +1000,7 @@ public class FreeMindMapController extends JMapController implements
 		}
 
 		public void actionPerformed(ActionEvent pE) {
-			Coordinate mapCenter = getMap().getPosition();
+			ICoordinate mapCenter = getMap().getPosition();
 			int zoom = getMap().getZoom() + mZoomDelta;
 			if (zoom < JMapViewer.MIN_ZOOM) {
 				zoom = JMapViewer.MIN_ZOOM;
@@ -1037,8 +1026,8 @@ public class FreeMindMapController extends JMapController implements
 			if (mCurrentPopupPositionHolder != null) {
 				link = getLink(mCurrentPopupPositionHolder);
 			} else {
-				Coordinate cursorPosition = getMap().getCursorPosition();
-				Coordinate position = getMap().getPosition();
+				ICoordinate cursorPosition = getMap().getCursorPosition();
+				ICoordinate position = getMap().getPosition();
 				int zoom = getMap().getZoom();
 				link = getLink(getTileSourceAsString(), cursorPosition,
 						position, zoom);
@@ -1073,7 +1062,7 @@ public class FreeMindMapController extends JMapController implements
 		 * @param pCoordinate
 		 * @return
 		 */
-		private String getCoordinates(Coordinate pCoordinate) {
+		private String getCoordinates(ICoordinate pCoordinate) {
 			return pCoordinate.getLat() + " " + pCoordinate.getLon();
 		}
 
@@ -1152,10 +1141,10 @@ public class FreeMindMapController extends JMapController implements
 			if (chosenFile == null) {
 				return;
 			}
-			boolean zoomContolsVisible = map.getZoomContolsVisible();
+			boolean zoomContolsVisible = map.getZoomControlsVisible();
 			try {
 				mMindMapController.getFrame().setWaitingCursor(true);
-				map.setZoomContolsVisible(false);
+				map.setZoomControlsVisible(false);
 				// Create an image containing the map:
 				BufferedImage myImage = (BufferedImage) map.createImage(
 						map.getWidth(), map.getHeight());
@@ -1166,7 +1155,7 @@ public class FreeMindMapController extends JMapController implements
 			} catch (IOException e1) {
 				freemind.main.Resources.getInstance().logException(e1);
 			}
-			map.setZoomContolsVisible(zoomContolsVisible);
+			map.setZoomControlsVisible(zoomContolsVisible);
 			mMindMapController.getFrame().setWaitingCursor(false);
 			return;
 
@@ -1368,14 +1357,14 @@ public class FreeMindMapController extends JMapController implements
 	 * @return
 	 */
 	protected MapNodePositionHolderBase placeNode(MindMapNode pSelected) {
-		Coordinate cursorPosition = getMap().getCursorPosition();
-		Coordinate position = map.getPosition();
+		ICoordinate cursorPosition = getMap().getCursorPosition();
+		ICoordinate position = map.getPosition();
 		int zoom = map.getZoom();
 		return placeNodeAt(pSelected, cursorPosition, position, zoom);
 	}
 
 	protected MapNodePositionHolderBase placeNodeAt(MindMapNode pSelected,
-			Coordinate cursorPosition, Coordinate position, int zoom) {
+													ICoordinate cursorPosition, ICoordinate position, int zoom) {
 		MapNodePositionHolder hook = MapNodePositionHolder.getHook(pSelected);
 		if (hook == null) {
 			hook = addHookToNode(pSelected);
@@ -1432,9 +1421,9 @@ public class FreeMindMapController extends JMapController implements
 			MapNodePositionHolder hook = MapNodePositionHolder.getHook(node);
 
 			if (hook != null) {
-				int x = (int) OsmMercator.LonToX(hook.getPosition().getLon(),
+				int x = (int) OsmMercator.MERCATOR_256.lonToX(hook.getPosition().getLon(),
 						mapZoomMax);
-				int y = (int) OsmMercator.LatToY(hook.getPosition().getLat(),
+				int y = (int) OsmMercator.MERCATOR_256.latToY(hook.getPosition().getLat(),
 						mapZoomMax);
 				x_max = Math.max(x_max, x);
 				y_max = Math.max(y_max, y);
@@ -1494,8 +1483,9 @@ public class FreeMindMapController extends JMapController implements
 	/**
 	 * Sets the cursor to the specified position and moves the display, such
 	 * that the cursor is visible.
+	 * @param position
 	 */
-	protected void setCursorPosition(Coordinate position) {
+	protected void setCursorPosition(ICoordinate position) {
 		getMap().setCursorPosition(position);
 		// is the cursor now visible and the zoom correct? if not, display it
 		// directly.
@@ -1714,7 +1704,7 @@ public class FreeMindMapController extends JMapController implements
 	}
 
 	public void setCursorPosition(MouseEvent e) {
-		final Coordinate coordinates = map.getPosition(e.getPoint());
+		final ICoordinate coordinates = map.getPosition(e.getPoint());
 		setCursorPosition(coordinates);
 	}
 
@@ -1779,8 +1769,8 @@ public class FreeMindMapController extends JMapController implements
 
 	}
 
-	public Coordinate getCoordinateFromMouseEvent(MouseEvent e) {
-		Coordinate mousePosition = map
+	public ICoordinate getCoordinateFromMouseEvent(MouseEvent e) {
+		ICoordinate mousePosition = map
 				.getPosition(new Point(e.getX(), e.getY()));
 		return mousePosition;
 	}
@@ -1876,13 +1866,13 @@ public class FreeMindMapController extends JMapController implements
 
 		if (e.getButton() == movementMouseButton || Tools.isMacOsX()
 				&& e.getButton() == MouseEvent.BUTTON1) {
-			final Coordinate coordinates = getCoordinateFromMouseEvent(e);
+			final ICoordinate coordinates = getCoordinateFromMouseEvent(e);
 			if (isMapNodeMoving) {
 				// check for minimal drag distance:
 				Point currentPoint = new Point(e.getPoint());
 				correctPointByMapCenter(currentPoint);
 				if (mDragStartingPoint.distance(currentPoint) > MapMarkerLocation.CIRCLE_RADIUS) {
-					Coordinate mousePosition = coordinates;
+					ICoordinate mousePosition = coordinates;
 					mMapNodeMovingSource.changePosition(mousePosition,
 							map.getPosition(), map.getZoom(),
 							getTileSourceAsString());
@@ -1942,7 +1932,7 @@ public class FreeMindMapController extends JMapController implements
 		}
 	}
 
-	protected void storeMapPosition(final Coordinate coordinates) {
+	protected void storeMapPosition(final ICoordinate coordinates) {
 		final PositionHolder holder = new PositionHolder(coordinates.getLat(),
 				coordinates.getLon(), getMap().getZoom());
 		final Vector<FreeMindMapController.PositionHolder> positionHolderVector = getPositionHolderVector();
@@ -2235,12 +2225,12 @@ public class FreeMindMapController extends JMapController implements
 		boolean limitSearchToRegion = mMapHook.isLimitSearchToRegion();
 		try {
 			if (true) {
-				b.append("https://nominatim.openstreetmap.org/search/?email=christianfoltin%40users.sourceforge.net&q="); //$NON-NLS-1$
+				b.append("https://nominatim.openstreetmap.org/search?email=christianfoltin%40users.sourceforge.net&q="); //$NON-NLS-1$
 				b.append(URLEncoder.encode(pText, "UTF-8"));
 				b.append("&format=xml&limit=30&accept-language=").append(Locale.getDefault().getLanguage()); //$NON-NLS-1$
 				if (limitSearchToRegion) {
-					Coordinate topLeftCorner = getMap().getPosition(0, 0);
-					Coordinate bottomRightCorner = getMap().getPosition(
+					ICoordinate topLeftCorner = getMap().getPosition(0, 0);
+					ICoordinate bottomRightCorner = getMap().getPosition(
 							getMap().getWidth(), getMap().getHeight());
 					b.append("&viewbox=");
 					b.append(topLeftCorner.getLon());
@@ -2464,7 +2454,7 @@ public class FreeMindMapController extends JMapController implements
 		Place place = new Place();
 		place.setDisplayName(errorString);
 		place.setOsmType(errorLevel);
-		Coordinate cursorPosition = getMap().getCursorPosition();
+		ICoordinate cursorPosition = getMap().getCursorPosition();
 		place.setLat(cursorPosition.getLat());
 		place.setLon(cursorPosition.getLon());
 		return place;
@@ -2503,9 +2493,9 @@ public class FreeMindMapController extends JMapController implements
 			}
 		}
 		// calculate the distance to the cursor
-		Coordinate coordinate = getCoordinateFromMouseEvent(mTimerMouseEvent);
-		Coordinate cursorPosition = getMap().getCursorPosition();
-		double distance = OsmMercator.getDistance(coordinate.getLat(),
+		ICoordinate coordinate = getCoordinateFromMouseEvent(mTimerMouseEvent);
+		ICoordinate cursorPosition = getMap().getCursorPosition();
+		double distance = OsmMercator.MERCATOR_256.getDistance(coordinate.getLat(),
 				coordinate.getLon(), cursorPosition.getLat(),
 				cursorPosition.getLon()) / 1000.0;
 		Object[] messageArguments = { Double.valueOf(distance),
@@ -2535,8 +2525,8 @@ public class FreeMindMapController extends JMapController implements
 		return getLink(tileSource, position, mapCenter, zoom);
 	}
 
-	public static String getLink(String tileSource, Coordinate position,
-			Coordinate mapCenter, int zoom) {
+	public static String getLink(String tileSource, ICoordinate position,
+								 ICoordinate mapCenter, int zoom) {
 		String layer = "M";
 		TileSourceStore tileSourceByName = FreeMindMapController
 				.getTileSourceByName(tileSource);
