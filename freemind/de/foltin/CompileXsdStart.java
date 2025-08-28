@@ -46,17 +46,9 @@ import org.xml.sax.helpers.DefaultHandler;
  * 
  */
 public class CompileXsdStart extends DefaultHandler {
-    public static final String FREEMIND_PACKAGE = "freemind.controller.actions.generated.instance";
-    private static final String DESTINATION_DIR_DEFAULT = "binding/src";
-
-    private static String destinationRoot() {
-        return System.getProperty("bindings.gen.dir", DESTINATION_DIR_DEFAULT);
-    }
-
-    private static String destinationPackageDir() {
-        return destinationRoot() + File.separator
-                + FREEMIND_PACKAGE.replace('.', File.separatorChar);
-    }
+	public static final String FREEMIND_PACKAGE = "freemind.controller.actions.generated.instance";
+	private static final String DESTINATION_DIR = "binding/src/"
+			+ FREEMIND_PACKAGE.replace('.', File.separatorChar);
 	private static final String FREEMIND_ACTIONS_XSD = "freemind_actions.xsd";
 	private static final String KEY_PACKAGE = "000_KEY_PACKAGE";
 	private static final String FILE_START = "010_start";
@@ -153,8 +145,8 @@ public class CompileXsdStart extends DefaultHandler {
 	}
 
 	private void print() throws Exception {
-        File dir = new File(destinationPackageDir());
-        dir.mkdirs();
+		File dir = new File(DESTINATION_DIR);
+		dir.mkdirs();
 		for (String className : mClassMap.keySet()) {
 
 			// special handling for strange group tag.
@@ -162,7 +154,7 @@ public class CompileXsdStart extends DefaultHandler {
 				continue;
 			HashMap<String, String> classMap = mClassMap.get(className);
 			// System.out.println("\nClass:" + keys);
-            FileOutputStream fs = new FileOutputStream(destinationPackageDir() + "/" + className + ".java");
+			FileOutputStream fs = new FileOutputStream(DESTINATION_DIR + "/" + className + ".java");
 			for (String orderString : mKeyOrder) {
 				if (classMap.containsKey(orderString)) {
 					String string = (String) classMap.get(orderString);
@@ -173,11 +165,11 @@ public class CompileXsdStart extends DefaultHandler {
 			fs.close();
 		}
 		// write binding to disk
-        if (true) {
-            FileOutputStream fs = new FileOutputStream(destinationPackageDir() + "/binding.xml");
-            fs.write(mBindingXml.toString().getBytes());
-            fs.close();
-        }
+		if (true) {
+			FileOutputStream fs = new FileOutputStream(DESTINATION_DIR + "/binding.xml");
+			fs.write(mBindingXml.toString().getBytes());
+			fs.close();
+		}
 	}
 
 	public void generate() throws ParserConfigurationException, SAXException,
